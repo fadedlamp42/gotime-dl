@@ -1,0 +1,43 @@
+#!/bin/python3
+from sys import argv, exit
+from subprocess import run
+from requests import get
+import re
+
+response = get("https://changelog.com/gotime")
+pattern = re.compile(r"Go Time #(\d+)")
+html = response.text
+matches = pattern.findall(html)
+most_recent = int(matches[0])
+
+eps = []
+if len(argv) == 1: # download all episodes
+    eps = list(range(1, most_recent+1))
+elif len(argv) == 3:
+    start, end = int(argv[1]), int(argv[2])
+    if start < 1:
+        start = 1
+    if end > most_recent:
+        end = most_recent
+
+    eps = list(range(start, min(end+1, most_recent+1)))
+elif len(argv) == 2:
+    if int(argv[1]) < 1:
+        eps.append(1)
+    elif int(argv[1]) > most_recent:
+        eps.append(most_recent)
+    else:
+        eps.append(int(argv[1]))
+else:
+    print("see https://github.com/fadedlamp42/gotime-dl for usage information")
+    exit()
+
+if len(eps) < 1:
+    print("nothing to download")
+    exit()
+
+for ep in eps:
+    print(f"downloading episode #{ep}...")
+    run(["wget",
+         f"https://cdn.changelog.com/uploads/gotime/{ep}/go-time-{ep}.mp3"])
+print(f"finished downloading {len(eps)} episode{'s' if len(eps) != 1 else ''}")
